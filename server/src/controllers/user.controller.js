@@ -7,25 +7,22 @@ import {uploadCloudinary} from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken"
 
 
-const generateRefreshAccessToken = async (userId) => {
+const generateRefreshAccessToken = async(userId)=>{
     try {
-        const user = await User.findById(userId);
-        if (!user) {
-            throw new Error('User not found');
-        }
+       const user = await User.findById(userId);
+       const accessToken = user.generatAccessToken();
+       const refreshToken = user.generatRefreshToken();
 
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
+       user.refreshToken = refreshToken;
 
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
-
-        return { accessToken, refreshToken };
+       await user.save({validateBeforeSave: false});
+        // console.log(user)
+       return {accessToken, refreshToken}
     } catch (error) {
-        console.error(error.message);
-        throw new Error('Something went wrong while generating refresh and access tokens');
+        console.error(error.message)
+    //    return res.status(500); throw new Error("Something went wrong while generating referesh and access token")
     }
-};
+}
 
 const generateUserId = async () => {
     const currentYear = new Date().getFullYear();
