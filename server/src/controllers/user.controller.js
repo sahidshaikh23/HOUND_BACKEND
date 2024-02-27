@@ -76,46 +76,42 @@ const registerUser = asyncHandler( async (req,res)=>{
 })
 
 
-const loginUser = asyncHandler(async (req, res) =>{
-    const {email, password} = req.body;
-    // console.log(email,password)
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
 
-    if(!email){
-        res.status(400); throw new Error("email is required")
+    if (!email) {
+        res.status(400);
+        throw new Error("email is required");
     }
 
-    const user = await User.findOne({email});
+    const user = await User.findOne({ email });
 
-    if(!user){
+    if (!user) {
         res.status(401).json({ error: 'User not found' });
     }
 
     const isPasswordValid = await user.isPasswordCorrect(password)
 
-    if(!isPasswordValid){
-        // res.status(401); throw new Error("Invalid Credentials")
+    if (!isPasswordValid) {
         res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const {accessToken, refreshToken} = await generateRefreshAccessToken(user._id)
-    console.log(refreshToken)
+    const { accessToken, refreshToken } = await generateRefreshAccessToken(user._id);
 
+    const LoggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
-    const LoggedInUser = await User.findById(user._id).select("-password -refreshToken")
-    const expiryDate = new Date(Date.now() + 3600000)
+    const expiryDate = new Date(Date.now() + 3600000);
     const options = {
         httpOnly: true,
-        // sameSite:"lax",
         expires: expiryDate
-    }
+    };
 
     res
-    // .cookie('accessToken', accessToken, {maxAge: 30000, httpOnly: true})
-    .cookie('accessToken', accessToken, {maxAge: 3000000, httpOnly: true,secure: true, sameSite: 'None'})
-    // .cookie("refreshToken", refreshToken, options)
-    .cookie("refreshToken", refreshToken, {maxAge: 86400000, httpOnly: true,secure: true, sameSite: 'None'})
-    return res.status(200).json({LoggedInUser})
-})
+        .cookie('accessToken', accessToken, { maxAge: 3000000, httpOnly: true, secure: true, sameSite: 'None' })
+        .cookie('refreshToken', refreshToken, { maxAge: 86400000, httpOnly: true, secure: true, sameSite: 'None' })
+        .status(200)
+        .json({ LoggedInUser });
+});
 
 const logoutUser=asyncHandler(async (req, res) =>{
     try {
